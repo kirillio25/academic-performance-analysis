@@ -8,10 +8,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <router-link class="nav-link" to="/academicPerformance">AcademicPerformance</router-link>
+                        <router-link class="nav-link" to="/academicPerformance">Академическая успеваемость</router-link>
                     </li>
                     <li class="nav-item">
-                        <router-link class="nav-link" to="/evaluation">Evaluation</router-link>
+                        <router-link class="nav-link" to="/evaluation">Оценки</router-link>
                     </li>
                 </ul>
             </div>

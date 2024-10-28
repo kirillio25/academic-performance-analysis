@@ -4,36 +4,39 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // import 'bootstrap';
 
 import {
-    Chart,
-    BarController,
-    PieController,
-    LineController,
-    CategoryScale,
-    LinearScale,
-    ArcElement,
-    BarElement,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-  } from 'chart.js';
-  
-  // Зарегистрируем все необходимые компоненты
-  Chart.register(
-    BarController,
-    PieController,
-    LineController,
-    CategoryScale,
-    LinearScale,
-    ArcElement,
-    BarElement,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-  );
+  Chart,
+  BarController,
+  PieController,
+  LineController,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler, // Добавляем Filler для поддержки опции 'fill'
+} from 'chart.js';
+
+// Регистрация всех необходимых компонентов, включая Filler
+Chart.register(
+  BarController,
+  PieController,
+  LineController,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler // Регистрируем Filler здесь
+);
+
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
