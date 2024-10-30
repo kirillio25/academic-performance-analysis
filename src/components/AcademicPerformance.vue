@@ -1,32 +1,29 @@
 <template>
   <div>
-    <h1 class="text-center mb-4">Академическая успеваемость</h1>
-    <!-- Кнопка для загрузки XML-файла -->
-    <div class="d-flex justify-content-center mb-4">
-      <input type="file" @change="handleFileUpload" accept=".xml" class="form-control w-50" />
-    </div>
-
+    <h1 class="text-center mb-4">Academic Performance</h1>
     <div v-if="data.length" class="container">
       <div class="row">
-        <div class="col-md-6 mb-4">
-          <!-- Столбчатый график -->
-          <canvas ref="barChartCanvas"></canvas>
-        </div>
-        <div class="col-md-6 mb-4">
-          <!-- Новый сгруппированный столбчатый график -->
-          <canvas ref="groupedBarChartCanvas"></canvas>
+        <div class="col-md-12 col-12 mb-12">
+          <!-- Grouped Bar Chart -->
+          <div class="chart-container">
+            <canvas ref="groupedBarChartCanvas"></canvas>
+          </div>
         </div>
       </div>
       <div class="row">
-        <div v-for="(year, index) in data" :key="index" class="col-md-6 mb-4">
-          <!-- Круговая диаграмма для каждого года -->
-          <canvas :ref="el => pieChartCanvas[index] = el"></canvas>
+        <div v-for="(year, index) in data" :key="index" class="col-md-6 col-12 mb-4">
+          <!-- Pie Chart for Each Year -->
+          <div class="chart-container">
+            <canvas :ref="el => pieChartCanvas[index] = el"></canvas>
+          </div>
         </div>
       </div>
       <div class="row">
-        <div class="col-md-12 mb-4">
-          <!-- Дополнительный график -->
-          <canvas ref="lineChartCanvas"></canvas>
+        <div class="col-md-12 col-12 mb-4">
+          <!-- Line Chart -->
+          <div class="chart-container">
+            <canvas ref="lineChartCanvas"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -34,7 +31,7 @@
 </template>
 
 <script>
-import { ref, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import {
   Chart,
   BarController,
@@ -51,7 +48,6 @@ import {
   Legend,
 } from 'chart.js';
 
-// Регистрация компонентов и шкал
 Chart.register(
   BarController,
   PieController,
@@ -68,24 +64,24 @@ Chart.register(
 );
 
 export default {
-  name: 'AcademicPerformance',
   setup() {
     const data = ref([]);
-    const barChartCanvas = ref(null);
     const pieChartCanvas = ref([]);
     const lineChartCanvas = ref(null);
-    const groupedBarChartCanvas = ref(null); // Новый график
+    const groupedBarChartCanvas = ref(null);
+    const charts = ref({});
+    let isSmallScreen = window.innerWidth < 768; // Проверка размера экрана при загрузке
 
-    // Обработка загрузки файла
-    const handleFileUpload = async (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const xmlText = await file.text();
+    const loadXMLFile = async () => {
+      try {
+        const response = await fetch('/src/assets/z03.xml');
+        const xmlText = await response.text();
         parseXMLData(xmlText);
+      } catch (error) {
+        console.error("Error loading XML file:", error);
       }
     };
 
-    // Парсинг XML-данных
     const parseXMLData = async (xmlText) => {
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
@@ -104,62 +100,62 @@ export default {
         },
       }));
 
-      // Дожидаемся отрисовки элементов, затем создаем графики
       await nextTick();
       createCharts();
     };
 
-    // Построение графиков
-    const createCharts = () => {
-      // Столбчатый график
-      if (barChartCanvas.value) {
-        new Chart(barChartCanvas.value, {
-          type: 'bar',
+    const createChart = (canvas, type, config) => {
+      if (!canvas) return null; // Проверка на наличие canvas
+      config.options.animation = false;
+      config.options.indexAxis = isSmallScreen ? 'y' : 'x';
+
+      return new Chart(canvas, config);
+    };
+
+    const destroyCharts = () => {
+      Object.values(charts.value).forEach(chart => {
+        if (chart) {
+          chart.destroy();
+        }
+      });
+      charts.value = {}; // Очищаем объект charts
+    };
+
+    const createCharts = async () => {
+      destroyCharts();
+      await nextTick();
+
+      if (lineChartCanvas.value) {
+        charts.value.line = createChart(lineChartCanvas.value, 'line', {
+          type: 'line',
           data: {
             labels: data.value.map(item => item.year),
-            datasets: [
-              {
-                label: 'A',
-                data: data.value.map(item => item.grades.A),
-                backgroundColor: 'rgba(75, 192, 192, 0.7)',
-              },
-              {
-                label: 'B',
-                data: data.value.map(item => item.grades.B),
-                backgroundColor: 'rgba(255, 159, 64, 0.7)',
-              },
-              {
-                label: 'C',
-                data: data.value.map(item => item.grades.C),
-                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-              },
-              {
-                label: 'D',
-                data: data.value.map(item => item.grades.D),
-                backgroundColor: 'rgba(255, 205, 86, 0.7)',
-              },
-              {
-                label: 'E',
-                data: data.value.map(item => item.grades.E),
-                backgroundColor: 'rgba(201, 203, 207, 0.7)',
-              },
-            ],
+            datasets: [{
+              label: 'Average Grade',
+              data: data.value.map(item => {
+                const grades = Object.values(item.grades);
+                return grades.reduce((a, b) => a + b, 0) / grades.length;
+              }),
+              backgroundColor: 'rgba(255, 99, 132, 0.3)',
+              borderColor: 'rgba(255, 99, 132, 0.8)',
+              fill: true,
+            }],
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
-              x: { title: { text: 'Год', display: true } },
-              y: { title: { text: 'Количество', display: true } },
+              x: { title: { text: 'Year', display: true }, ticks: { font: { size: 14 } } },
+              y: { title: { text: 'Average Grade', display: true }, ticks: { font: { size: 14 } } },
             },
           },
         });
       }
 
-      // Круговые диаграммы для каждого года
       data.value.forEach((yearData, index) => {
         const canvasRef = pieChartCanvas.value[index];
         if (canvasRef) {
-          new Chart(canvasRef, {
+          charts.value[`pie_${index}`] = new Chart(canvasRef, {
             type: 'pie',
             data: {
               labels: ['A', 'B', 'C', 'D', 'E', 'FX', 'FN'],
@@ -172,115 +168,72 @@ export default {
                   'rgba(255, 205, 86, 0.7)',
                   'rgba(201, 203, 207, 0.7)',
                   'rgba(54, 162, 235, 0.7)',
-                  'rgba(255, 99, 132, 0.7)'
+                  'rgba(255, 99, 132, 0.7)',
                 ],
               }],
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               plugins: {
                 legend: { position: 'top' },
-                title: { display: true, text: `Распределение оценок за ${yearData.year}` },
+                title: { display: true, text: `Grade Distribution for ${yearData.year}` },
               },
             },
           });
         }
       });
 
-      // Дополнительный линейный график
-      if (lineChartCanvas.value) {
-        new Chart(lineChartCanvas.value, {
-          type: 'line',
-          data: {
-            labels: data.value.map(item => item.year),
-            datasets: [
-              {
-                label: 'Средний балл',
-                data: data.value.map(item => {
-                  const grades = Object.values(item.grades);
-                  return grades.reduce((a, b) => a + b, 0) / grades.length;
-                }),
-                backgroundColor: 'rgba(255, 99, 132, 0.3)',
-                borderColor: 'rgba(255, 99, 132, 0.8)',
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: { title: { text: 'Год', display: true } },
-              y: { title: { text: 'Средний балл', display: true } },
-            },
-          },
-        });
-      }
-
-      // Новый сгруппированный столбчатый график
       if (groupedBarChartCanvas.value) {
-        new Chart(groupedBarChartCanvas.value, {
+        charts.value.groupedBar = createChart(groupedBarChartCanvas.value, 'bar', {
           type: 'bar',
           data: {
             labels: data.value.map(item => item.year),
             datasets: [
-              {
-                label: 'A',
-                data: data.value.map(item => item.grades.A),
-                backgroundColor: 'rgba(75, 192, 192, 0.7)',
-              },
-              {
-                label: 'B',
-                data: data.value.map(item => item.grades.B),
-                backgroundColor: 'rgba(255, 159, 64, 0.7)',
-              },
-              {
-                label: 'C',
-                data: data.value.map(item => item.grades.C),
-                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-              },
-              {
-                label: 'D',
-                data: data.value.map(item => item.grades.D),
-                backgroundColor: 'rgba(255, 205, 86, 0.7)',
-              },
-              {
-                label: 'E',
-                data: data.value.map(item => item.grades.E),
-                backgroundColor: 'rgba(201, 203, 207, 0.7)',
-              },
-              {
-                label: 'FX',
-                data: data.value.map(item => item.grades.FX),
-                backgroundColor: 'rgba(54, 162, 235, 0.7)',
-              },
-              {
-                label: 'FN',
-                data: data.value.map(item => item.grades.FN),
-                backgroundColor: 'rgba(255, 99, 132, 0.7)',
-              },
+              { label: 'A', data: data.value.map(item => item.grades.A), backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+              { label: 'B', data: data.value.map(item => item.grades.B), backgroundColor: 'rgba(255, 159, 64, 0.7)' },
+              { label: 'C', data: data.value.map(item => item.grades.C), backgroundColor: 'rgba(153, 102, 255, 0.7)' },
+              { label: 'D', data: data.value.map(item => item.grades.D), backgroundColor: 'rgba(255, 205, 86, 0.7)' },
+              { label: 'E', data: data.value.map(item => item.grades.E), backgroundColor: 'rgba(201, 203, 207, 0.7)' },
+              { label: 'FX', data: data.value.map(item => item.grades.FX), backgroundColor: 'rgba(54, 162, 235, 0.7)' },
+              { label: 'FN', data: data.value.map(item => item.grades.FN), backgroundColor: 'rgba(255, 99, 132, 0.7)' },
             ],
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
-              x: { stacked: false, title: { text: 'Год', display: true } },
-              y: { stacked: false, title: { text: 'Количество', display: true } },
+              x: { title: { text: 'Year', display: true }, ticks: { font: { size: 14 } } },
+              y: { title: { text: 'Count', display: true }, ticks: { font: { size: 14 } } },
             },
             plugins: {
-              title: {
-                display: true,
-                text: 'Сравнение оценок по годам',
-              },
+              title: { display: true, text: 'Grade Comparison by Year' },
             },
           },
         });
       }
     };
 
+    const handleResize = () => {
+      const newIsSmallScreen = window.innerWidth < 768;
+      if (newIsSmallScreen !== isSmallScreen) {
+        isSmallScreen = newIsSmallScreen;
+        createCharts();
+      }
+    };
+
+    onMounted(() => {
+      loadXMLFile();
+      window.addEventListener('resize', handleResize);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', handleResize);
+      destroyCharts(); // Очищаем все графики перед размонтированием
+    });
+
     return {
       data,
-      handleFileUpload,
-      barChartCanvas,
       pieChartCanvas,
       lineChartCanvas,
       groupedBarChartCanvas,
@@ -289,27 +242,19 @@ export default {
 };
 </script>
 
+
 <style scoped>
 .chart-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 1200px; /* Maximum width for centering on large screens */
+  height: 800px; /* Increased height for extending the chart */
   margin: auto;
   margin-bottom: 30px;
 }
 
 @media (max-width: 768px) {
   .chart-container {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 576px) {
-  /* Полное изменение на мобильных устройствах */
-  .container {
-    padding: 0;
-  }
-  .chart-container {
-    max-width: 100%;
+    height: 600px; /* Maintaining increased height for mobile devices */
   }
 }
 </style>
