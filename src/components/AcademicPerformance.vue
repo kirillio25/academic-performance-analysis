@@ -4,7 +4,6 @@
     <div v-if="data.length" class="container">
       <div class="row">
         <div class="col-md-12 col-12 mb-12">
-          <!-- Grouped Bar Chart -->
           <div class="chart-container">
             <canvas ref="groupedBarChartCanvas"></canvas>
           </div>
@@ -12,7 +11,6 @@
       </div>
       <div class="row">
         <div v-for="(year, index) in data" :key="index" class="col-md-6 col-12 mb-4">
-          <!-- Pie Chart for Each Year -->
           <div class="chart-container">
             <canvas :ref="el => pieChartCanvas[index] = el"></canvas>
           </div>
@@ -20,7 +18,6 @@
       </div>
       <div class="row">
         <div class="col-md-12 col-12 mb-4">
-          <!-- Line Chart -->
           <div class="chart-container">
             <canvas ref="lineChartCanvas"></canvas>
           </div>
@@ -254,7 +251,7 @@ export default {
 
 @media (max-width: 768px) {
   .chart-container {
-    height: 600px; /* Maintaining increased height for mobile devices */
+    height: 600px;
   }
 }
 </style>
