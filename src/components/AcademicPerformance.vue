@@ -71,7 +71,7 @@ export default {
 
     const loadXMLFile = async () => {
       try {
-        const response = await fetch('/src/assets/z03.xml');
+        const response = await fetch('/z03.xml');
         const xmlText = await response.text();
         parseXMLData(xmlText);
       } catch (error) {
