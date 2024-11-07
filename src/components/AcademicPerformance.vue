@@ -71,8 +71,7 @@ export default {
 
     const loadXMLFile = async () => {
       try {
-        const response = await fetch('/z03.xml');
-        const xmlText = await response.text();
+        const response = await fetch(`${import.meta.env.BASE_URL}z03.xml`);        const xmlText = await response.text();
         parseXMLData(xmlText);
       } catch (error) {
         console.error("Error loading XML file:", error);
