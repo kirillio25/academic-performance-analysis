@@ -93,7 +93,7 @@ export default {
         }
       });
 
-      sse = new EventSource('http://old.iolab.sk/evaluation/sse/sse.php');
+      sse = new EventSource('https://cors-anywhere.herokuapp.com/http://old.iolab.sk/evaluation/sse/sse.php');
       sse.onmessage = (event) => {
         const parsedData = JSON.parse(event.data);
         const x = parsedData.x;
