@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
 export default defineConfig({
-  publicPath: '/academic-performance-analysis/',
+  base: '/academic-performance-analysis/',
   plugins: [
     vue(),
   ],
